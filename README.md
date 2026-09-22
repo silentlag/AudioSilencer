@@ -1,3 +1,5 @@
+<div align="center">
+
 # AudioSilencer
 
 Mutes Discord when an osu! combo crosses a threshold you set. When the combo drops or the map ends, sound comes back.
@@ -82,3 +84,5 @@ Run `make_share.bat` - produces a `share/` folder with the exe, icon, tosu, and 
 - [tosu](https://github.com/tosu-dev/tosu) - osu! memory reader
 - [AutoDeafen](https://github.com/Lynxdeer/AutoDeafen) - the IPC deafen approach, from Geometry Dash
 - [pycaw](https://github.com/AndreMiras/pycaw) - Windows audio sessions (mixer method)
+
+<div align="center">
