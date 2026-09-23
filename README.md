@@ -82,7 +82,7 @@ Run `make_share.bat` - produces a `share/` folder with the exe, icon, tosu, and 
 ## Credits
 
 - [tosu](https://github.com/tosuapp/tosu) - osu! memory reader
-- [AutoDeafen](https://github.com/Lynxdeer/AutoDeafen) - Inspired (Geometry dash analogue)
+- [AutoDeafen](https://github.com/Lynxdeer/AutoDeafen) - Inspired from (Geometry dash analogue)
 - [pycaw](https://github.com/AndreMiras/pycaw) - Windows audio sessions (mixer method)
 
 <div align="center">
