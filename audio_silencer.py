@@ -12,8 +12,8 @@ import urllib.request
 import webbrowser
 import websocket
 from pycaw.pycaw import AudioUtilities
-GOSUMEMORY_HTTP = "http://127.0.0.1:24050"
-GOSUMEMORY_WS = "ws://127.0.0.1:24050/ws"
+TOSU_HTTP = "http://127.0.0.1:24050"
+TOSU_WS = "ws://127.0.0.1:24050/ws"
 DEFAULT_THRESHOLD = 1000
 DEBUG = os.environ.get("OSU_DEBUG") == "1"
 GUI = "--gui" in sys.argv or len(sys.argv) == 1
@@ -276,7 +276,7 @@ def _ipc_connect() -> bool:
             if hs is None:
                 _ipc_close()
                 continue
-            if hs[0] == 2:  # CLOSE: этот пайп отклонил handshake
+            if hs[0] == 2:
                 _dbg(f"pipe {i} rejected: {hs[1][:100]}")
                 _ipc_close()
                 continue
@@ -284,7 +284,7 @@ def _ipc_connect() -> bool:
                 user = json.loads(hs[1]).get("data", {}).get("user", {}).get("username", "")
             except Exception:
                 user = ""
-            if user.lower() == "arrpc":  # arRPC (Vencord и т.п.) не умеет AUTHENTICATE
+            if user.lower() == "arrpc":
                 _dbg(f"skipping arRPC pipe {i}")
                 _ipc_close()
                 continue
@@ -509,7 +509,7 @@ def set_discord_mute(mute: bool) -> None:
 
 def _ws_alive() -> bool:
     try:
-        urllib.request.urlopen(GOSUMEMORY_HTTP, timeout=1)
+        urllib.request.urlopen(TOSU_HTTP, timeout=1)
         return True
     except Exception:
         return False
@@ -521,7 +521,7 @@ def _launch_tosu_hidden() -> bool:
         return False
     si = subprocess.STARTUPINFO()
     si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-    si.wShowWindow = 0  # SW_HIDE
+    si.wShowWindow = 0
     subprocess.Popen([default], startupinfo=si)
     for _ in range(30):
         if _ws_alive():
@@ -619,7 +619,7 @@ def on_message(_ws, message):
         miss = _gp_miss(d)
         sb = _gp_slider_breaks(d)
         if sb is None:
-            sb = _fc_sb   # tosu не отдаёт - держим последнее значение
+            sb = _fc_sb
         pct = _map_progress_pct(d) if state == 2 else 0.0
         _gui_state["pct"] = pct
         _gui_state["fc_miss"] = miss
@@ -631,7 +631,7 @@ def on_message(_ws, message):
             _fc_prev_time = 0
         else:
             cur_time = d.get("menu", {}).get("bm", {}).get("time", {}).get("current")
-            if not _fc_in_map:      # первый тик новой карты - сброс базы
+            if not _fc_in_map:
                 _fc_in_map = True
                 _fc_clean = True
                 _fc_miss = miss
@@ -644,7 +644,6 @@ def on_message(_ws, message):
             elif (isinstance(cur_time, (int, float))
                     and isinstance(_fc_prev_time, (int, float))
                     and cur_time < _fc_prev_time - 2000):
-                # время откатилось назад -> рестарт карты, не слайдербрейк
                 _fc_clean = True
                 _fc_miss = miss
                 _fc_sb = sb or 0
@@ -655,7 +654,7 @@ def on_message(_ws, message):
                     _map_locked = False
             else:
                 _fc_prev_time = cur_time if isinstance(cur_time, (int, float)) else _fc_prev_time
-            if miss > _fc_miss or (sb is not None and sb > _fc_sb):  # мисс или SB
+            if miss > _fc_miss or (sb is not None and sb > _fc_sb):
                 if miss > _fc_miss:
                     _fc_miss = miss
                     _fc_clean = False
@@ -666,12 +665,12 @@ def on_message(_ws, message):
                     _fc_sb = sb
                     if _fc_clean:
                         _log("fc: slider break - FC lost")
-                    _fc_clean = False   # мьют держим, FC сломан
+                    _fc_clean = False
             else:
                 if _fc_prev_combo > 0 and combo == 0:
                     if _fc_clean:
                         _log("fc: combo break (slider break) - FC lost")
-                    _fc_clean = False   # слайдербрейк: FC сломан, мьют держим
+                    _fc_clean = False
                 _fc_prev_combo = combo
                 if not _map_locked and _fc_clean and pct >= THRESHOLD:
                     set_discord_mute(True)
@@ -706,7 +705,7 @@ def _ws_loop():
         pass
     while not _stop.is_set():
         try:
-            _ws_app = websocket.WebSocketApp(GOSUMEMORY_WS, on_message=on_message)
+            _ws_app = websocket.WebSocketApp(TOSU_WS, on_message=on_message)
             _ws_app.run_forever()
         except Exception as e:
             print("ws error:", e)
@@ -772,10 +771,10 @@ def _run_gui():
         except Exception:
             pass
     root.configure(bg=BG)
-    try:  # тёмный титлбар (DWM immersive dark mode)
+    try:
         hwnd = ctypes.windll.user32.GetParent(root.winfo_id())
         val = ctypes.c_int(1)
-        for attr in (20, 19):  # DWMWA_USE_IMMERSIVE_DARK_MODE (19 для старых сборок)
+        for attr in (20, 19):
             if ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, attr, ctypes.byref(val), 4) == 0:
                 break
     except Exception:
@@ -883,8 +882,7 @@ def _run_gui():
         lambda *a: (_refresh_proc_ui(), live_apply()) if live_apply_ready[0] else None,
     )
     live_apply_ready = [False]
-    # Discord app credentials (каждому нужен СВОЙ client_id/secret — rpc OAuth
-    # в приватной бете Discord, чужое приложение не авторизуется)
+    # Discord app credentials
     credframe = tk.Frame(body, bg=BG)
     credframe.grid(row=4, column=0, columnspan=3, sticky="w", pady=(6, 0))
     ttk.Label(credframe, text="App Client ID").pack(side="left")
