@@ -103,7 +103,7 @@ def _log(msg):
     print(msg)
 
 def _dpapi(data: bytes, protect: bool) -> bytes:
-    """Windows DPAPI: шифрование, привязанное к пользователю+машине."""
+    """Windows DPAPI crypting for token security"""
     from ctypes import wintypes
 
     class BLOB(ctypes.Structure):
@@ -131,7 +131,6 @@ def _dpapi(data: bytes, protect: bool) -> bytes:
 
 
 def _discord_cfg_out() -> dict:
-    """Для записи в конфиг: токены шифруются DPAPI, plaintext не пишется."""
     out = {k: v for k, v in DISCORD.items()
            if k not in ("access_token", "refresh_token", "access_enc", "refresh_enc")}
     if DISCORD.get("access_token"):
